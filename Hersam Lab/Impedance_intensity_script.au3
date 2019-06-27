@@ -1,9 +1,22 @@
-; Measurement script by Michael C. Heiber, Vinod Sangwan, and Sam Amsterdam
+; Copyright (c) 2019 Michael C. Heiber
+; This script file is part of the AutoItScripts repository, which is subject to the MIT License.
+; For more information, see the LICENSE file that accompanies this repository.
+; The AutoItScripts repository can be found on Github at https://github.com/MikeHeiber/AutoItScripts
+;
+; Measurement script by Michael C. Heiber
+; with contributions from Vinod Sangwan and Sam Amsterdam
+;
 ; Who is doing the measurement?
 Local $measurement_persons = "Sam Amsterdam"
-; Sample Info
+; Define the sample name
 Local $device_name = "WY6_1A"
-; Define the filters to be tested
+; Define the device area
+Local $device_area = 0.06 ; cm^2
+; Define the active layer thickness
+Local $active_thickness = 100 ; nm
+; Define the data directory (Where to save the data?)
+Local $data_dir = "C:\Users\Impedance Users\Desktop\IPDA Measurements\Data\"
+; Define the filters to be used in the test
 Local $filter_positions[] = [12, 8, 7, 6, 5, 4, 3, 2, 1] ; OD
 
 ; Filter table
@@ -45,37 +58,45 @@ Local $end_voltage = 1.0 ; V
 ; Define voltage step size
 Local $step_size = 50 ; mV
 
+; ===================================================================================================
+
+; AutoIt Settings
+; Partial window title matching
+AutoItSetOption("WinTitleMatchMode",2)
 
 ; Setup data folder
-If Not FileExists("C:\Users\Impedance Users\Desktop\IPDA Measurements\Data\"&$device_name&" Impedance Data") Then
-   DirCreate("C:\Users\Impedance Users\Desktop\IPDA Measurements\Data\"&$device_name&" Impedance Data")
+If Not FileExists($data_dir&$device_name&" Impedance Data") Then
+   DirCreate($data_dir&$device_name&" Impedance Data")
 EndIf
 ; Run the filter wheel control software if it's not already running
-If Not WinActivate("COM3 - PuTTY") Then
+If Not WinActivate("PuTTY") Then
+	; Open putty
    run("C:\Program Files\PuTTY\putty.exe")
    WinWaitActive("PuTTY Configuration")
-   Send("{TAB}{TAB}{TAB}{TAB}{DOWN}{DOWN}!l{Enter}")
-   WinWaitActive("COM3 - PuTTY")
+   ; Connect to the filter wheel
+   Send("{TAB 4}{DOWN 2}!l{Enter}")
+   WinWaitActive("PuTTY")
    Send("{ENTER}")
-   ; set filter to dark condition
+   ; Set filter to dark condition
    Send("pos=12{ENTER}")
-   Sleep(2000)
+   ; Wait for 4 seconds for the filter wheel to move
+   Sleep(4000)
 EndIf
 
 ; Run Zplot if it's not already running
 If Not WinActivate("ZPlot)") Then
+	; Open Zplot
    run("C:\SAI\Programs\ZPlot.exe")
    WinWaitActive("ZPlot")
-   ; open measurement settings
+   ; Open measurement settings
    Send("!si")
-   WinWaitActive("Setup Instruments  (Solartron 1260)")
-   ; change to Analyzer tab
+   WinWaitActive("Setup Instruments")
+   ; Change to Analyzer tab
    Send("{RIGHT}")
-   ; click cycles radio button
-   ControlClick("Setup Instruments  (Solartron 1260)", "", "[CLASS:TRadioButton; INSTANCE:3]")
-   ; set N_cycles
-   Send("{TAB}"&$N_cycles)
-   Send("{ENTER}")
+   ; Click cycles radio button
+   ControlClick("Setup Instruments", "", "[CLASS:TRadioButton; INSTANCE:3]")
+   ; Set N_cycles
+   Send("{TAB}"&$N_cycles&"{ENTER}")
 EndIf
 
 ; -- Phase 1 -- dark impedance frequency scan
@@ -84,58 +105,58 @@ EndIf
    WinWaitActive("ZPlot")
    ; Set the dark C-f measurement conditions
    Local $window_handle = WinWaitActive("ZPlot")
-   ; set dc bias
+   ; Set dc bias
    ControlSetText($window_handle, "", "[CLASSNN:ValidateEdit5]", $dc_bias)
    ControlClick($window_handle, "", "[CLASSNN:ValidateEdit5]")
-   ; set ac amplitude
+   ; Set ac amplitude
    ControlSetText($window_handle, "", "[CLASSNN:ValidateEdit4]", $ac_amplitude)
    ControlClick($window_handle, "", "[CLASSNN:ValidateEdit4]")
-   ; set frequency range
+   ; Set frequency range
    ControlSetText($window_handle, "", "[CLASSNN:ValidateEdit3]", $start_freq)
    ControlClick($window_handle, "", "[CLASSNN:ValidateEdit3]")
    ControlSetText($window_handle, "", "[CLASSNN:ValidateEdit2]", $end_freq)
    ControlClick($window_handle, "", "[CLASSNN:ValidateEdit2]")
-   ; set points per decade
+   ; Set points per decade
    ControlSetText($window_handle, "", "[CLASSNN:ValidateEdit1]", $N_ppd)
    ControlClick($window_handle, "", "[CLASSNN:ValidateEdit1]")
    ; Run the dark impedance measurement
    Send("^s")
-   ; check for measurement completion
-   WinWaitActive("Save Data As...")
-   ; save the data
+   ; Check for measurement completion
+   WinWaitActive("Save Data As")
+   ; Save the data
    ; Check for previous measurements and avoid name conflict
    Local $N_measurement = 1
-   While FileExists("C:\Users\Impedance Users\Desktop\IPDA Measurements\Data\"&$device_name&" Impedance Data\"&$device_name&"_ImpedanceCf_dark_"&$N_measurement&".z")
+   While FileExists($data_dir&$device_name&" Impedance Data\"&$device_name&"_ImpedanceCf_dark_"&$N_measurement&".z")
 	  $N_measurement += 1
    WEnd
-   ; save new data file
-   Send("C:\Users\Impedance Users\Desktop\IPDA Measurements\Data\"&$device_name&" Impedance Data\"&$device_name&"_ImpedanceCf_dark_"&$N_measurement&".z")
+   ; Save new data file
+   Send($data_dir&$device_name&" Impedance Data\"&$device_name&"_ImpedanceCf_dark_"&$N_measurement&".z")
    Send("{ENTER}")
 
 ; -- Phase 2 -- light impedance bias scan at each intensity
 ; Activate the ZPlot window
    WinActivate("ZPlot")
    Local $window_handle = WinWaitActive("ZPlot")
-   ; switch tab to Control E: Sweep DC
+   ; Switch tab to Control E: Sweep DC
    Send("{RIGHT}")
    Sleep(500)
    ; Set the light C-V settings
-   ; set frequency
+   ; Set frequency
    ControlSetText($window_handle, "", "[CLASSNN:ValidateEdit10]", $measurement_freq)
    ControlClick($window_handle, "", "[CLASSNN:ValidateEdit10]")
-   ; set start voltage
+   ; Set start voltage
    ControlSetText($window_handle, "", "[CLASSNN:ValidateEdit8]", $start_voltage)
    ControlClick($window_handle, "", "[CLASSNN:ValidateEdit8]")
-   ; set end voltage
+   ; Set end voltage
    ControlSetText($window_handle, "", "[CLASSNN:ValidateEdit7]", $end_voltage)
    ControlClick($window_handle, "", "[CLASSNN:ValidateEdit7]")
-   ; set sweep segments to 1
+   ; Set sweep segments to 1
    ControlSetText($window_handle, "", "[CLASSNN:ValidateEdit4]", "1")
    ControlClick($window_handle, "", "[CLASSNN:ValidateEdit4]")
-   ; set sweep step size
+   ; Set sweep step size
    ControlSetText($window_handle, "", "[CLASSNN:ValidateEdit6]", $step_size)
    ControlClick($window_handle, "", "[CLASSNN:ValidateEdit6]")
-   ; set data rate to 1
+   ; Set data rate to 1
    ControlSetText($window_handle, "", "[CLASSNN:ValidateEdit5]", "1")
    ControlClick($window_handle, "", "[CLASSNN:ValidateEdit5]")
 
@@ -145,44 +166,47 @@ Local $filters[] = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 1, 1.3, 2, 3, 4]
 For $i = 0 To UBound($filter_positions)-1
 
    ; Activate the filter wheel putty control
-   WinActivate("COM3 - PuTTY")
-   WinWaitActive("COM3 - PuTTY")
-   ; set the filter position
-   Send("pos="&$filter_positions[$i])
-   Send("{ENTER}")
-   Sleep(5000)
+   WinActivate("PuTTY")
+   WinWaitActive("PuTTY")
+   ; Set the filter position
+   Send("pos="&$filter_positions[$i]&"{ENTER}")
+   ; Wait for 4 seconds for filter wheel to move
+   Sleep(4000)
 
    ; Activate the Zplot window
    WinActivate("ZPlot")
    WinWaitActive("ZPlot")
-   ; Run the light impedance
+   ; Run the light impedance CV sweep
    Send("^s")
-   ; check for measurement completion
-   WinWaitActive("Save Data As...")
-   ; save the data
+   ; Check for measurement completion
+   WinWaitActive("Save Data As")
+   ; Save the data
    ; Check for previous measurements and avoid name conflict
    Local $N_measurement = 1
-   Local $partial_path = "C:\Users\Impedance Users\Desktop\IPDA Measurements\Data\"&$device_name&" Impedance Data\"&$device_name&"_ImpedanceCV_"&$filters[$filter_positions[$i]-1]&"OD"
+   Local $partial_path = ""
    If $filter_positions[$i] = 12 Then
-	  $partial_path = "C:\Users\Impedance Users\Desktop\IPDA Measurements\Data\"&$device_name&" Impedance Data\"&$device_name&"_ImpedanceCV_dark"
-   EndIf
-   If $filter_positions[$i] = 1 Then
-	  $partial_path = "C:\Users\Impedance Users\Desktop\IPDA Measurements\Data\"&$device_name&" Impedance Data\"&$device_name&"_ImpedanceCV_1sun"
+	  $partial_path = $data_dir&$device_name&" Impedance Data\"&$device_name&"_ImpedanceCV_dark"
+   ElseIf $filter_positions[$i] = 1 Then
+	  $partial_path = $data_dir&$device_name&" Impedance Data\"&$device_name&"_ImpedanceCV_1sun"
+   Else
+	  $partial_path = $data_dir&$device_name&" Impedance Data\"&$device_name&"_ImpedanceCV_"&$filters[$filter_positions[$i]-1]&"OD"
    EndIf
    While FileExists($partial_path&"_"&$N_measurement&".z")
 	  $N_measurement += 1
    WEnd
-   ; save new data file
+   ; Save new data file
    Send($partial_path&"_"&$N_measurement&".z")
    Send("{ENTER}")
 Next
 
-
 ; Turn off light
 ; Activate the filter wheel putty control
-WinActivate("COM3 - PuTTY")
-WinWaitActive("COM3 - PuTTY")
-; set the filter position
+WinActivate("PuTTY")
+WinWaitActive("PuTTY")
+; Set the filter position
 Send("pos=12{ENTER}")
+
+; Close ZPlot
+WinClose("ZPlot")
 
 ; Plot the results
