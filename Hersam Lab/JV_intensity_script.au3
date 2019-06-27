@@ -9,7 +9,7 @@
 ; Who is doing the measurement?
 Local $measurement_persons = "Sam Amsterdam"
 ; Define the sample name
-Local $device_name = "WY6_1A"
+Local $device_name = "WY6_3D"
 ; Define the device area
 Local $device_area = 0.06 ; cm^2
 ; Define the solar simulator mismatch factor
@@ -92,7 +92,7 @@ Send("{ENTER}")
 
 ; Perform intensity dependent JV measurements
 ; Loop through the filter positions array and measure at each light intensity
-Local $filters[] = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 1, 1.3, 2, 3, 10]
+Local $filters[] = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 1.0, 1.3, 2.0, 3.0, 10]
 
 For $i = 0 To UBound($filter_positions)-1
 
@@ -143,5 +143,16 @@ WinActivate("PuTTY")
 WinWaitActive("PuTTY")
 ; Set the filter position
 Send("pos=12{ENTER}")
+; Close Putty
+WinClose("PuTTY")
+WinWaitActive("PuTTY Exit")
+Send("{ENTER}")
+
+; Close the Labview IV program
+WinActivate("KE2400")
+WinWaitActive("KE2400")
+WinClose("KE2400")
+WinWaitActive("Save changes")
+Send("{TAB}{ENTER}")
 
 ; Plot the results

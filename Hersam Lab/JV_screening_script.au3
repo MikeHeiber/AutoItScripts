@@ -9,7 +9,7 @@
 ; Who is doing the measurement?
 Local $measurement_persons = "Sam Amsterdam"
 ; Define the sample name
-Local $device_name = "WY6_1C"
+Local $device_name = "WY6_3D"
 ; Define the device area
 Local $device_area = 0.06 ; cm^2
 ; Define the solar simulator mismatch factor
@@ -95,7 +95,7 @@ Send("{ENTER}")
 
 ; Perform intensity dependent JV measurements
 ; Loop through the filter positions array and measure at each light intensity
-Local $filters[] = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 1, 1.3, 2, 3, 10]
+Local $filters[] = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 1.0, 1.3, 2.0, 3.0, 10]
 
 For $i = 0 To UBound($filter_positions)-1
    ; Activate the putty filter wheel putty control window
@@ -145,29 +145,40 @@ WinActivate("PuTTY")
 WinWaitActive("PuTTY")
 ; Set the filter position
 Send("pos=12{ENTER}")
+; Close Putty
+WinClose("PuTTY")
+WinWaitActive("PuTTY Exit")
+Send("{ENTER}")
 
 ; Close the Labview IV program
+WinActivate("KE2400")
+WinWaitActive("KE2400")
 WinClose("KE2400")
+WinWaitActive("Save changes")
+Send("{TAB}{ENTER}")
 
 ; Plot the results
 ; Open Igor Pro
 If Not WinActivate("Igor Pro") Then
-	run("Igor Pro.exe")
+	run("C:\Program Files (x86)\WaveMetrics\Igor Pro Folder\Igor.exe")
 EndIf
 WinWaitActive("Igor Pro")
 ; Load the JV data
 ; Activate the command window
-Send("!J")
-; Wait a half second for the window to activate
-Sleep(500)
+Send("^j")
+; Wait 1 second for the window to activate
+Sleep(1000)
 ; Execute the load command
-Local $JV_dir = $data_dir&$device_name&' JV Data\"
-$JV_dir = StringReplace(JV_dir,"\",":")
-Send('FEDMS_LoadJVFolder("'&$JV_dir'","'&$measurement_persons&'","","Hersam Lab",'&$device_area&','&$mismatch_factor&'){ENTER}')
+Local $JV_dir = $data_dir&$device_name&" JV Data\"
+$JV_dir = StringReplace($JV_dir,"\",":")
+$JV_dir = StringReplace($JV_dir,"::",":")
+Send('FEDMS_LoadJVFolder("'&$JV_dir&'","'&$measurement_persons&'","","Hersam Lab",'&$device_area&','&$mismatch_factor&'){ENTER}')
 ; Plot each measured JV curve
 For $i = 0 To UBound($filter_positions)-1
+   ; Wait 2 sec before trying to plot the next curve
+	Sleep(2000)
 	; Activate the command window
-	Send("!J")
+	Send("^j")
 	; Wait a half second for the window to activate
 	Sleep(500)
 	; Plot the measured curve
@@ -178,6 +189,5 @@ For $i = 0 To UBound($filter_positions)-1
 	Else
 		Send('FEDMS_PlotJV("'&$device_name&'","JVscreen","'&$filters[$filter_positions[$i]-1]&'OD"){ENTER}')
 	EndIf
-	; Wait 1 sec before trying to plot the next curve
-	Sleep(1000)
+
 Next
