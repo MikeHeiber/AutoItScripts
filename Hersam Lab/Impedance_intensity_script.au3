@@ -218,3 +218,22 @@ WinWaitActive("Information")
 Send("{TAB}{ENTER}")
 
 ; Plot the results
+; Open Igor Pro
+If Not WinActivate("Igor Pro") Then
+	run("C:\Program Files (x86)\WaveMetrics\Igor Pro Folder\Igor.exe")
+EndIf
+WinWaitActive("Igor Pro")
+; Load the impednace data
+; Activate the command window
+Send("^j")
+; Wait a half second for the window to activate
+Sleep(500)
+; Execute the load command to import the JV data into Igor
+Local $impedance_dir = $data_dir&$device_name&" Impedance Data\"
+$impedance_dir = StringReplace($impedance_dir,"\",":")
+$impedance_dir = StringReplace($impedance_dir,"::",":")
+Send('FEDMS_LoadImpedanceFolder("'&$impedance_dir&'","'&$measurement_persons&'","","Hersam Lab",'&$device_area&','&$active_thickness&'){ENTER}')
+; Wait 2 sec before executing the next command
+Sleep(2000)
+; Analyze and plot the capacitance results
+Send('FEDMS_AnalyzeImpedanceData("'&$device_name&'",show_graphs=1){ENTER}'

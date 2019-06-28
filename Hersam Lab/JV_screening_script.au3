@@ -166,8 +166,8 @@ WinWaitActive("Igor Pro")
 ; Load the JV data
 ; Activate the command window
 Send("^j")
-; Wait 1 second for the window to activate
-Sleep(1000)
+; Wait a half second for the window to activate
+Sleep(500)
 ; Execute the load command
 Local $JV_dir = $data_dir&$device_name&" JV Data\"
 $JV_dir = StringReplace($JV_dir,"\",":")
@@ -189,5 +189,4 @@ For $i = 0 To UBound($filter_positions)-1
 	Else
 		Send('FEDMS_PlotJV("'&$device_name&'","JVscreen","'&$filters[$filter_positions[$i]-1]&'OD"){ENTER}')
 	EndIf
-
 Next

@@ -17,7 +17,7 @@ Local $mismatch_factor = 0.87
 ; Define the data directory (Where to save the data?)
 Local $data_dir = "C:\Users\Impedance Users\Desktop\IPDA Measurements\Data\"
 ; Define the filters to be used in the test
-Local $filter_positions[] = [12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1] ; OD
+Local $filter_positions[] = [12, 8, 7, 6, 5, 4, 3, 2, 1] ; OD
 ; Filter table
 ; pos OD
 ; 1   0.0
@@ -156,3 +156,26 @@ WinWaitActive("Save changes")
 Send("{TAB}{ENTER}")
 
 ; Plot the results
+; Open Igor Pro
+If Not WinActivate("Igor Pro") Then
+	run("C:\Program Files (x86)\WaveMetrics\Igor Pro Folder\Igor.exe")
+EndIf
+WinWaitActive("Igor Pro")
+; Load the JV data
+; Activate the command window
+Send("^j")
+; Wait a half second for the window to activate
+Sleep(500)
+; Execute the load command to import the JV data into Igor
+Local $JV_dir = $data_dir&$device_name&" JV Data\"
+$JV_dir = StringReplace($JV_dir,"\",":")
+$JV_dir = StringReplace($JV_dir,"::",":")
+Send('FEDMS_LoadJVFolder("'&$JV_dir&'","'&$measurement_persons&'","","Hersam Lab",'&$device_area&','&$mismatch_factor&'){ENTER}')
+; Wait 2 sec before executing the next command
+Sleep(2000)
+; Analyze the JV intensity data
+Send('FEDMS_AnalyzeJVIntensity("'&$device_name&'"){ENTER}'
+; Wait 2 sec before executing the next command
+Sleep(2000)
+; Plot the photocurrent data for all intensities
+Send('FEDMS_PlotPhotocurrentData("'&$device_name&'"){ENTER}'
