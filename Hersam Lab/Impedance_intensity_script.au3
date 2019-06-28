@@ -39,7 +39,7 @@ Local $measurement_freq = 1000 ; Hz
 ; AC amplitude
 Local $ac_amplitude = 100 ; mV
 ; Define number of cycles for averaging
-Local $N_cycles = 50 ; s
+Local $N_cycles = 100 ; cycles
 
 ; Dark C-f scan settings
 Local $dc_bias = -2.0 ; V
@@ -54,9 +54,9 @@ Local $N_ppd = 10
 ; Start voltage
 Local $start_voltage = -1.0 ; V
 ; End voltage
-Local $end_voltage = 0.9 ; V
+Local $end_voltage = 1.0 ; V
 ; Define voltage step size
-Local $step_size = 25 ; mV
+Local $step_size = 50 ; mV
 
 ; ===================================================================================================
 
@@ -232,7 +232,7 @@ Sleep(500)
 Local $impedance_dir = $data_dir&$device_name&" Impedance Data\"
 $impedance_dir = StringReplace($impedance_dir,"\",":")
 $impedance_dir = StringReplace($impedance_dir,"::",":")
-Send('FEDMS_LoadImpedanceFolder("'&$impedance_dir&'","'&$measurement_persons&'","","Hersam Lab",'&$device_area&','&$active_thickness&'){ENTER}')
+Send('FEDMS_LoadImpedanceFolder("'&$impedance_dir&'","'&$measurement_persons&'","","Hersam Lab",'&$device_area&','&$active_thickness*1e-7&'){ENTER}')
 ; Wait 2 sec before executing the next command
 Sleep(2000)
 ; Analyze and plot the capacitance results
